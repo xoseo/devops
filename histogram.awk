@@ -4,11 +4,12 @@
 	next } 
 END {
 	min=0
-	for (i in arr) {
+	lenarr=length(arr)
+	for (i=0; i<lenarr; i++) {
 		if ( min == 100) {
-			printf min ": " arr[i] " "
+			printf "%d :\t%d ",min,arr[i]
 		} else {
-			printf min " - " min+len-1 ": " arr[i] " "
+			printf "%d - %d : %d ",min,min+len-1,arr[i]
 		}
 		for (j = 0; j < arr[i]; j++)
 			printf "*"
