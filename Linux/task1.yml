@@ -1,0 +1,6 @@
+---
+
+script: make_conf.sh
+subroutine: make_config
+begin_patr: {%
+end_patr: %}
