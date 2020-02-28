@@ -1,0 +1,3 @@
+---
+script: file_mover.sh
+config: file_mover.conf
