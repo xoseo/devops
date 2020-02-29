@@ -30,6 +30,7 @@
       port: 80/tcp
       permanent: yes
       state: enabled
+      immediate: yes
   - name: Edit grub
     lineinfile:
       path: /etc/default/grub
