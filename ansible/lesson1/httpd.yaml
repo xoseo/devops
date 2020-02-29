@@ -12,8 +12,11 @@
       name: httpd
       state: started
       enabled: yes
+  - name: Stop NM
+    service:
       name: NetworkManager
       state: stopped
+      enabled: no
   - name: Copy index.html
     copy:
       src: httpd_files/index.html
@@ -34,5 +37,3 @@
       line: 'GRUB_CMDLINE_LINUX="no_timer_check console=tty0 console=ttyS0,115200n8 elevator=noop crashkernel=auto net.ifnames=0 biosdevname=0"'
   - name: grub2-mkconfig
     command: grub2-mkconfig
-
-
