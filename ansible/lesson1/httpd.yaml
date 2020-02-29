@@ -1,0 +1,38 @@
+---
+- hosts:
+    - node1.example.com
+    - node2.example.com
+  tasks:
+  - name: install HTTPD
+    yum:
+      name: httpd
+      state: latest
+  - name: Start HTTPD
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+      name: NetworkManager
+      state: stopped
+  - name: Copy index.html
+    copy:
+      src: httpd_files/index.html
+      dest: /var/www/html/index.html
+      owner: apache
+      group: apache
+      mode: '0600'
+      force: yes
+  - name: Settings for firewalld
+    firewalld:
+      port: 80/tcp
+      permanent: yes
+      state: enabled
+  - name: Edit grub
+    lineinfile:
+      path: /etc/default/grub
+      regexp: 'GRUB_CMDLINE_LINUX(.+)'
+      line: 'GRUB_CMDLINE_LINUX="no_timer_check console=tty0 console=ttyS0,115200n8 elevator=noop crashkernel=auto net.ifnames=0 biosdevname=0"'
+  - name: grub2-mkconfig
+    command: grub2-mkconfig
+
+
