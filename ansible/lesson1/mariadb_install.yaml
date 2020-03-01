@@ -1,0 +1,25 @@
+---
+- hosts:
+    - node1.example.com
+    - node2.example.com
+  tasks:
+  - name: Check if /tmp/database is exists
+    stat:
+      path: /tmp/database
+    register: tmpdb
+  - name: Install MariaDB
+    yum:
+      name: mariadb-server
+      state: latest
+    when: tmpdb.stat.isreg is defined and tmpdb.stat.isreg
+  - name: Check if mariadb.service is exists
+    stat:
+      path: /usr/lib/systemd/system/mariadb.service
+    register: mariadb
+  - name: Start MariaDB
+    service:
+      name: mariadb.service
+      state: started
+      enabled: yes
+    when: mariadb.stat.isreg is defined and mariadb.stat.isreg
+

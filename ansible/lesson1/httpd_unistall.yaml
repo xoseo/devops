@@ -1,0 +1,24 @@
+---
+- hosts:
+    - node1.example.com
+    - node2.example.com
+  tasks:
+  - name: Stop HTTPD
+    service:
+      name: httpd
+      state: stopped
+  - name: remove HTTPD
+    yum:
+      name: httpd
+      state: absent
+  - name: Remove index.html
+    file:
+      path: /var/www/html/index.html
+      state: absent
+  - name: Settings for firewalld
+    firewalld:
+      port: 80/tcp
+      permanent: yes
+      state: disabled
+      immediate: yes
+

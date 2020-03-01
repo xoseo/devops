@@ -1,0 +1,50 @@
+---
+- hosts:
+    - node1.example.com
+    - node2.example.com
+  tasks:
+  - name: install Vsftpd
+    yum:
+      name: vsftpd
+      state: latest
+  - name: Start vsftpd
+    service:
+      name: vsftpd
+      state: started
+      enabled: yes
+  - name: Settings for firewalld
+    firewalld:
+      port: 21/tcp
+      permanent: yes
+      state: enabled
+      immediate: yes
+  - name: Create /var/ftp/pub
+    file:
+      path: /var/ftp/pub
+      state: directory
+      owner: ftp
+      group: nobody
+      mode: 0755
+  - name: Change ftpd_anon_write to on
+    shell: 
+      cmd: setsebool -P ftpd_anon_write on; chcon -t public_content_rw_t /var/ftp/pub; systemctl restart vsftpd.service
+  - name: FTP configuation
+    lineinfile:
+      dest: /etc/vsftpd/vsftpd.conf
+      backup: yes
+      backrefs: yes
+      state: present
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+    with_items:
+      - { regexp: anonymous_enable=NO, line: anonymous_enable=YES }
+      - { regexp: anon_upload_enable, line: anon_upload_enable=YES }
+      - { regexp: anon_mkdir_write_enable, line: anon_mkdir_write_enable=YES }
+
+
+
+
+
+
+
+
