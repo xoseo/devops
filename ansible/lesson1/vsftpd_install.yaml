@@ -25,9 +25,10 @@
       owner: ftp
       group: nobody
       mode: 0755
+      setype: public_content_rw_t
   - name: Change ftpd_anon_write to on
     shell: 
-      cmd: setsebool -P ftpd_anon_write on; chcon -t public_content_rw_t /var/ftp/pub; systemctl restart vsftpd.service
+      cmd: setsebool -P ftpd_anon_write on; systemctl restart vsftpd.service
   - name: FTP configuation
     lineinfile:
       dest: /etc/vsftpd/vsftpd.conf
