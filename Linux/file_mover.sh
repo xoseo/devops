@@ -1,6 +1,9 @@
 #!/bin/bash
 
-eval $(cat file_mover.conf)
+CONFPATH=$(dirname "$0")
+
+. ${CONFPATH}/file_mover.conf
+
 touch "$LOGFILENAME"
 PID=$$
 for file in $(find "$SOURCEDIR" -type f -size +0c -printf "%f\n"); do
