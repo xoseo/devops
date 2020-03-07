@@ -1,0 +1,5 @@
+---
+- hosts: lamp
+  remote_user: root
+  roles:
+    - apache_vhost

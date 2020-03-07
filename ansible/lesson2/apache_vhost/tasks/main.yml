@@ -1,0 +1,42 @@
+---
+- name: install HTTPD
+  yum:
+    name: httpd
+    state: latest
+- name: Start HTTPD
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+- name: Copy vhost config
+  template:
+    src: templates/vhost.conf.j2
+    dest: "{{ vhosts_configs }}{{ ansible_fqdn }}.conf"
+    owner: root
+    group: root
+    mode: 0640
+    force: yes
+  notify:
+    - httpd reload
+- name: Create destination directory
+  file:
+    dest: /var/www/{{ ansible_fqdn }}
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0770
+- name: Copy index.html
+  template:
+    src: templates/index.html.j2
+    dest: /var/www/{{ ansible_fqdn }}/index.html
+    owner: apache
+    group: apache
+    mode: 0640
+    force: yes
+- name: Settings for firewalld
+  firewalld:
+    port: 80/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+

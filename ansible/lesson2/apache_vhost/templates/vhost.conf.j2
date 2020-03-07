@@ -1,0 +1,6 @@
+<VirtualHost *:80>
+    DocumentRoot /var/www/"{{ ansible_fqdn }}"
+    ServerName "{{ ansible_fqdn }}"
+    ServerAlias www."{{ ansible_fqdn }}"
+    # ...
+</VirtualHost>

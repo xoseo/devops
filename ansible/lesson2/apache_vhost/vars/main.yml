@@ -1,0 +1,3 @@
+---
+# vars file for apache_vhost
+vhosts_configs: /etc/httpd/conf.d/
