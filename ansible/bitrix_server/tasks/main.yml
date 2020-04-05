@@ -1,0 +1,217 @@
+# tasks file for bitrix_server
+---
+- name: install epel-release
+  yum:
+    name: epel-release
+    state: present
+- name: install NGINX
+  yum:
+    name: nginx
+    state: present
+- name: Copy nginx.conf
+  copy:
+    src: files/nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+- name: Copy default site config for nginx
+  template:
+    src: templates/bitrix_default.conf.j2
+    dest: "{{ nginx_sites }}{{ ansible_facts['nodename'] }}.conf"
+    owner: root
+    group: root
+    mode: 640
+    force: yes
+- name: install HTTPD
+  yum:
+    name: httpd
+    state: present
+- name: Create destination directory
+  file:
+    dest: /var/www/{{ ansible_facts['nodename'] }}
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0770
+- name: Copy httpd.conf
+  copy:
+    src: files/httpd.conf
+    dest: /etc/httpd/conf/httpd.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+- name: Copy default site config for httpd
+  template:
+    src: templates/httpd_vhost.conf.j2
+    dest: "{{ vhosts_configs }}{{ ansible_facts['nodename'] }}.conf"
+    owner: root
+    group: root
+    mode: 640
+    force: yes
+- name: Stop and disable Firewalld Service
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+- name: Create MariaDB repo
+  yum_repository:
+    name: mariadb
+    description: MariaDB repo
+    baseurl: "{{ mariadb_repo }}"
+    gpgkey: "{{ mariadb_gpgkey }}"
+    gpgcheck: yes
+    enabled: yes
+- name: Install MariaDB packages
+  yum:
+    name: "{{ mariadb_packages }}"
+    state: present
+- name: Copy mysql config
+  copy:
+    src: files/mysql.conf
+    dest: /etc/my.cnf.d/for_bitrix.cnf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+- name: Start and enable MariaDB Service
+  service:
+    name: "{{ mariadb_service }}"
+    state: started
+    enabled: yes
+- name: Remove Anonymous users
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+- name: Remove the test Database
+  mysql_db:
+    name: test
+    state: absent
+- name: Create mariadb_user with name {{ mariadb_user }} and password {{ mariadb_user_pass }} with all privileges on {{ mariadb_db }}
+  mysql_user:
+    name: "{{ mariadb_user }}"
+    password: "{{ mariadb_user_pass }}"
+    priv: "{{ mariadb_db }}.*:ALL"
+    host: localhost
+    state: present
+- name: Create the database with name {{ mariadb_db }}
+  mysql_db:
+    name: "{{ mariadb_db }}"
+    state: present
+- name: Install remi repo.
+  yum:
+    name: http://rpms.famillecollet.com/enterprise/remi-release-{{ ansible_facts['distribution_major_version'] }}.rpm
+    state: present
+- name: Import remi GPG key.
+  rpm_key:
+    key: http://rpms.remirepo.net/RPM-GPG-KEY-remi
+    state: present
+- name: install PHP
+  yum:
+    name: "{{ php_packages }}"
+    state: present
+- name: Copy poll config
+  copy:
+    src: files/www.conf
+    dest: /etc/opt/remi/php{{ php_version }}/php-fpm.d/www.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+- name: Copy bitrixsetup.php
+  copy:
+    src: files/bitrixsetup.php
+    dest: /var/www/{{ ansible_facts['nodename'] }}/bitrixsetup.php
+    owner: apache
+    group: apache
+    mode: 0640
+    force: yes
+- name: install Memcached
+  yum:
+    name: memcached
+    state: present
+- name: install additional software
+  yum:
+    name: "{{ additional_packages }}"
+    state: present
+- name: Adding bitrix repo for push-server
+  copy:
+    src: files/bitrix.repo
+    dest: /etc/yum.repos.d/
+    owner: root
+    group: root
+    mode: '0644'
+- name: install Push-server
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+  - nodejs
+  - push-server
+  - http-parser
+  register: pushinstalled
+- name: adding user redis to group apache
+  user:
+    name: redis
+    group: apache
+- name: Copy files for push-server
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: "{{ item.bckp }}"
+  with_items:
+    - { src: 'files/im_subscrider.conf', dest: '/etc/nginx/bx/conf/', bckp: 'no' }
+    - { src: 'files/rtc-server.conf', dest: '/etc/nginx/bx/site_enabled/', bckp: 'no' }
+    - { src: 'files/redis.conf', dest: '/etc/', bckp: 'yes' }
+    - { src: 'files/systemd_redis_custom.conf', dest: '/etc/systemd/system/redis.service.d/custom.conf', bckp: 'no' }
+- name: Copy templates for push-server
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 640
+    force: yes
+    backup: "{{ item.bckp }}"
+  with_items:
+    - { src: 'templates/rtc-im_settings.conf', dest: '/etc/nginx/bx/settings/', bckp: 'no' }
+    - { src: 'templates/push-server-multi.j2', dest: '/etc/sysconfig/push-server-multi', bckp: 'yes' }
+- name: Execute the command "push-server-multi reset" only when previous task was changed, i.e. only when push-server was installed
+  shell: /etc/init.d/push-server-multi reset
+  when: pushinstalled.changed
+- name: Editing /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: "{{ ansible_facts['nodename'] }}"
+    line: "{{ ansible_facts['default_ipv4']['address'] }} {{ ansible_facts['nodename'] }}"
+- name: Start and enable Redis Service
+  service:
+    name: redis
+    state: started
+    enabled: yes
+- name: Start and enable HTTPD
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+- name: Start and enable NGINX
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+- name: Start and enable PHP-FPM Service
+  service:
+    name: "{{ php_fpm_service }}"
+    state: started
+    enabled: yes
+- name: Start and enable Memcached Service
+  service:
+    name: memcached
+    state: started
+    enabled: yes

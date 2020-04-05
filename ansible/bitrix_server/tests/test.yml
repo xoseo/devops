@@ -1,0 +1,5 @@
+---
+- hosts: node1.example.com
+  remote_user: root
+  roles:
+    - bitrix_server

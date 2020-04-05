@@ -1,0 +1,13 @@
+---
+- name: httpd reload
+  service:
+    name: httpd
+    state: reloaded
+- name: nginx reload
+  service:
+    name: nginx
+    state: reloaded
+- name: mariadb restart
+  service:
+    name: "{{ mariadb_service }}"
+    state: restarted
