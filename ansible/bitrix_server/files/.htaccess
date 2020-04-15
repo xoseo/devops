@@ -1,0 +1,8 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase "/"
+    RewriteCond "%{REQUEST_URI}" "!=/bitrixsetup.php"
+    RewriteRule "^(.*)$" "http://298601-xoseovds.tmweb.ru/bitrixsetup.php" [L,PT]
+</IfModule>

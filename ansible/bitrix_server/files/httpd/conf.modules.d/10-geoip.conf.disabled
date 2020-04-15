@@ -1,0 +1,1 @@
+LoadModule geoip_module modules/mod_geoip.so

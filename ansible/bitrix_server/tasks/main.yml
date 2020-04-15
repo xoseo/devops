@@ -1,33 +1,69 @@
 # tasks file for bitrix_server
 ---
-- name: install epel-release
+- name: Install Epel-release
   yum:
     name: epel-release
     state: present
-- name: install NGINX
+- name: Install PIP
+  yum:
+    name: python2-pip.noarch
+    state: present
+- name: Install latest pyOpenSSL
+  pip:
+    name: pyOpenSSL
+    state: latest
+- name: Install NGINX
   yum:
     name: nginx
     state: present
-- name: Copy nginx.conf
+  register: nginxinstalled
+- name: Remove original NGINX configs
+  file:
+    path: /etc/nginx
+    state: absent
+  when: nginxinstalled.changed
+- name: Copy NGINX configs
   copy:
-    src: files/nginx.conf
-    dest: /etc/nginx/nginx.conf
+    src: files/nginx
+    dest: /etc/
     owner: root
     group: root
-    mode: '0644'
-    backup: yes
-- name: Copy default site config for nginx
+    mode: '0700'
+- name: Copy templates for NGINX
   template:
-    src: templates/bitrix_default.conf.j2
-    dest: "{{ nginx_sites }}{{ ansible_facts['nodename'] }}.conf"
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
     owner: root
     group: root
     mode: 640
     force: yes
-- name: install HTTPD
+  with_items:
+    - { src: "templates/nginx/bx/site_enabled/s1.conf", dest: "{{ nginx_sites }}s1.conf" }
+    - { src: "templates/nginx/bx/settings/rtc-im_settings.conf", dest: "/etc/nginx/bx/settings/rtc-im_settings.conf"}
+- name: Generate DH Parameters with a size 2048 bits
+  openssl_dhparam:
+    path: /etc/nginx/ssl/dhparam.pem
+    size: 2048
+- name: Generate an OpenSSL private key with a size 2048 bits
+  openssl_privatekey:
+    path: /etc/nginx/ssl/cert.key
+    size: 2048
+- name: Generate an OpenSSL Certificate Signing Request
+  openssl_csr:
+    path: /etc/nginx/ssl/cert.csr
+    privatekey_path: /etc/nginx/ssl/cert.key
+    common_name: "{{ ansible_facts['nodename'] }}"
+- name: Generate a Self Signed OpenSSL certificate
+  openssl_certificate:
+    path: /etc/nginx/ssl/cert.crt
+    privatekey_path: /etc/nginx/ssl/cert.key
+    csr_path: /etc/nginx/ssl/cert.csr
+    provider: selfsigned
+- name: Install HTTPD
   yum:
     name: httpd
     state: present
+  register: httpdinstalled
 - name: Create destination directory
   file:
     dest: /var/www/{{ ansible_facts['nodename'] }}
@@ -35,22 +71,29 @@
     owner: apache
     group: apache
     mode: 0770
-- name: Copy httpd.conf
+- name: Remove original HTTPD configs
+  file:
+    path: /etc/httpd
+    state: absent
+  when: httpdinstalled.changed
+- name: Copy HTTPD configs
   copy:
-    src: files/httpd.conf
-    dest: /etc/httpd/conf/httpd.conf
+    src: files/httpd
+    dest: /etc/
     owner: root
     group: root
-    mode: '0644'
-    backup: yes
-- name: Copy default site config for httpd
+    mode: '0700'
+- name: Copy templates for HTTPD
   template:
-    src: templates/httpd_vhost.conf.j2
-    dest: "{{ vhosts_configs }}{{ ansible_facts['nodename'] }}.conf"
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
     owner: root
     group: root
     mode: 640
     force: yes
+  with_items:
+    - { src: "templates/httpd/bx/conf/default.conf", dest: "/etc/httpd/bx/conf/default.conf"}
+    - { src: "templates/httpd/conf/httpd.conf", dest: "/etc/httpd/conf/httpd.conf" }
 - name: Stop and disable Firewalld Service
   service:
     name: firewalld
@@ -68,7 +111,7 @@
   yum:
     name: "{{ mariadb_packages }}"
     state: present
-- name: Copy mysql config
+- name: Copy MariaDB config
   copy:
     src: files/mysql.conf
     dest: /etc/my.cnf.d/for_bitrix.cnf
@@ -101,19 +144,19 @@
   mysql_db:
     name: "{{ mariadb_db }}"
     state: present
-- name: Install remi repo.
+- name: Install Remi repo.
   yum:
     name: http://rpms.famillecollet.com/enterprise/remi-release-{{ ansible_facts['distribution_major_version'] }}.rpm
     state: present
-- name: Import remi GPG key.
+- name: Import Remi GPG key.
   rpm_key:
     key: http://rpms.remirepo.net/RPM-GPG-KEY-remi
     state: present
-- name: install PHP
+- name: Install PHP
   yum:
     name: "{{ php_packages }}"
     state: present
-- name: Copy poll config
+- name: Copy php-fpm poll config
   copy:
     src: files/www.conf
     dest: /etc/opt/remi/php{{ php_version }}/php-fpm.d/www.conf
@@ -121,15 +164,18 @@
     group: root
     mode: '0644'
     backup: yes
-- name: Copy bitrixsetup.php
+- name: Copy bitrixsetup.php and .htaccess
   copy:
-    src: files/bitrixsetup.php
-    dest: /var/www/{{ ansible_facts['nodename'] }}/bitrixsetup.php
+    src: "{{ item }}"
+    dest: /var/www/{{ ansible_facts['nodename'] }}/
     owner: apache
     group: apache
     mode: 0640
     force: yes
-- name: install Memcached
+  with_items:
+    - files/bitrixsetup.php
+    - files/.htaccess
+- name: Install Memcached
   yum:
     name: memcached
     state: present
@@ -137,14 +183,14 @@
   yum:
     name: "{{ additional_packages }}"
     state: present
-- name: Adding bitrix repo for push-server
+- name: Adding bitrix repo for Push-server
   copy:
     src: files/bitrix.repo
     dest: /etc/yum.repos.d/
     owner: root
     group: root
     mode: '0644'
-- name: install Push-server
+- name: Install Push-server
   yum:
     name: "{{ item }}"
     state: present
@@ -153,11 +199,11 @@
   - push-server
   - http-parser
   register: pushinstalled
-- name: adding user redis to group apache
+- name: Adding user redis to group apache
   user:
     name: redis
     group: apache
-- name: Copy files for push-server
+- name: Copy files for Push-server
   copy:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -166,23 +212,24 @@
     mode: '0644'
     backup: "{{ item.bckp }}"
   with_items:
-    - { src: 'files/im_subscrider.conf', dest: '/etc/nginx/bx/conf/', bckp: 'no' }
-    - { src: 'files/rtc-server.conf', dest: '/etc/nginx/bx/site_enabled/', bckp: 'no' }
     - { src: 'files/redis.conf', dest: '/etc/', bckp: 'yes' }
     - { src: 'files/systemd_redis_custom.conf', dest: '/etc/systemd/system/redis.service.d/custom.conf', bckp: 'no' }
-- name: Copy templates for push-server
-  template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    owner: root
-    group: root
-    mode: 640
-    force: yes
-    backup: "{{ item.bckp }}"
+- name: Change settings of Push-server
+  lineinfile:
+    path: /etc/sysconfig/push-server-multi
+    regexp: "{{ item.src }}"
+    line: "{{ item.dest }}"
   with_items:
-    - { src: 'templates/rtc-im_settings.conf', dest: '/etc/nginx/bx/settings/', bckp: 'no' }
-    - { src: 'templates/push-server-multi.j2', dest: '/etc/sysconfig/push-server-multi', bckp: 'yes' }
-- name: Execute the command "push-server-multi reset" only when previous task was changed, i.e. only when push-server was installed
+    - { src: '^ID_SUB', dest: 'ID_SUB=1' }
+    - { src: '^ID_PUB', dest: 'ID_PUB=1' }
+    - { src: '^USER', dest: 'USER=apache' }
+  when: pushinstalled.changed
+- name: Change settings of Push-server 2
+  lineinfile:
+    path: /etc/sysconfig/push-server-multi
+    line: "WS_HOST={{ ansible_facts['default_ipv4']['address'] }}"
+  when: pushinstalled.changed
+- name: Execute the command "push-server-multi reset" only when push-server was installed
   shell: /etc/init.d/push-server-multi reset
   when: pushinstalled.changed
 - name: Editing /etc/hosts
@@ -215,3 +262,7 @@
     name: memcached
     state: started
     enabled: yes
+- name: Start push-server-multi Service
+  service:
+    name: push-server-multi
+    state: started

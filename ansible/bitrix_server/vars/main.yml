@@ -15,10 +15,10 @@ mariadb_service: mariadb
 
 mariadb_user: default_bitrix
 mariadb_user_pass: default_bitrix
-mariadb_db: bitrix_standart
+mariadb_db: default_bitrix
 
 #Nginx
-nginx_sites: /etc/nginx/conf.d/
+nginx_sites: /etc/nginx/bx/site_enabled/
 
 #PHP
 php_version: 72
