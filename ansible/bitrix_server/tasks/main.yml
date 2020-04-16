@@ -172,7 +172,7 @@
     group: apache
     mode: 0640
     force: yes
-  with_item:
+  with_items:
     - files/bitrixsetup.php
     - files/.htaccess
 - name: Install Memcached
