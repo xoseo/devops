@@ -4,5 +4,5 @@ Options -Indexes
     RewriteEngine On
     RewriteBase "/"
     RewriteCond "%{REQUEST_URI}" "!=/bitrixsetup.php"
-    RewriteRule "^(.*)$" "http://298601-xoseovds.tmweb.ru/bitrixsetup.php" [L,PT]
+    RewriteRule "^(.*)$" "http://{{ ansible_facts['nodename'] }}/bitrixsetup.php" [L,PT]
 </IfModule>

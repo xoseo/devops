@@ -166,15 +166,20 @@
     backup: yes
 - name: Copy bitrixsetup.php and .htaccess
   copy:
-    src: "{{ item }}"
+    src: files/bitrixsetup.php
     dest: /var/www/{{ ansible_facts['nodename'] }}/
     owner: apache
     group: apache
     mode: 0640
     force: yes
-  with_items:
-    - files/bitrixsetup.php
-    - files/.htaccess
+- name: Copy .htaccess
+  template:
+    src: files/.htaccess
+    dest: /var/www/{{ ansible_facts['nodename'] }}/
+    owner: apache
+    group: apache
+    mode: 0640
+    force: yes
 - name: Install Memcached
   yum:
     name: memcached
