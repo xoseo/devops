@@ -1,8 +1,9 @@
 Options -Indexes
 
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase "/"
-    RewriteCond "%{REQUEST_URI}" "!=/bitrixsetup.php"
-    RewriteRule "^(.*)$" "http://{{ ansible_facts['nodename'] }}/bitrixsetup.php" [L,PT]
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !/bitrixsetup.php$
+RewriteRule ^(.*)$ /bitrixsetup.php [L]
 </IfModule>
+
