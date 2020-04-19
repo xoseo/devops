@@ -94,11 +94,23 @@
   with_items:
     - { src: "templates/httpd/bx/conf/default.conf", dest: "/etc/httpd/bx/conf/default.conf"}
     - { src: "templates/httpd/conf/httpd.conf", dest: "/etc/httpd/conf/httpd.conf" }
-- name: Stop and disable Firewalld Service
+- name: Start Firewalld Service
   service:
     name: firewalld
-    state: stopped
+    state: started
     enabled: no
+- name: Settings for firewalld
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  with_items:
+    - 80/tcp
+    - 443/tcp
+    - 8893/tcp
+    - 8894/tcp
+    - 8895/tcp
 - name: Create MariaDB repo
   yum_repository:
     name: mariadb
