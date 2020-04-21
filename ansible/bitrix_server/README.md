@@ -45,9 +45,9 @@
 ----------------
 
 Файлы роли можно разместить в:
-./roles
-~/.ansible/roles
-/etc/ansible/roles
+* ./roles
+* ~/.ansible/roles
+* /etc/ansible/roles
 
 Для тестирования роли создайте файл inventory, например:
 ```
