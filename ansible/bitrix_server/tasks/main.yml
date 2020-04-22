@@ -168,14 +168,24 @@
   yum:
     name: "{{ php_packages }}"
     state: present
-- name: Copy php-fpm poll config
+- name: Enable HugePages for Zend Opcache
+  sysctl:
+    name: vm.nr_hugepages
+    value: '32'
+    sysctl_set: yes
+    state: present
+    reload: yes
+- name: Copy php.ini config
   copy:
-    src: files/www.conf
-    dest: /etc/opt/remi/php{{ php_version }}/php-fpm.d/www.conf
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
     owner: root
     group: root
     mode: '0644'
     backup: yes
+  with_items:
+    - { src: 'files/php.ini', dest: "/etc/opt/remi/php{{ php_version }}/php.ini" }
+    - { src: 'files/10-opcache.ini', dest: "/etc/opt/remi/php{{ php_version }}/php.d/10-opcache.ini" }
 - name: Copy bitrixsetup.php and .htaccess
   copy:
     src: "{{ item }}"
@@ -187,10 +197,6 @@
   with_items:
     - files/bitrixsetup.php
     - files/.htaccess
-- name: Install Memcached
-  yum:
-    name: memcached
-    state: present
 - name: install additional software
   yum:
     name: "{{ additional_packages }}"
@@ -267,11 +273,6 @@
 - name: Start and enable PHP-FPM Service
   service:
     name: "{{ php_fpm_service }}"
-    state: started
-    enabled: yes
-- name: Start and enable Memcached Service
-  service:
-    name: memcached
     state: started
     enabled: yes
 - name: Start push-server-multi Service

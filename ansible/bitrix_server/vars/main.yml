@@ -21,7 +21,7 @@ mariadb_db: default_bitrix
 nginx_sites: /etc/nginx/bx/site_enabled/
 
 #PHP
-php_version: 72
+php_version: 73
 php_fpm_service: "php{{ php_version }}-php-fpm"
 
 php_packages:
@@ -41,7 +41,6 @@ php_packages:
   - php{{ php_version }}-php-pecl-zip
   - php{{ php_version }}-php-opcache
   - php{{ php_version }}-php-pecl-imagick
-  - php{{ php_version }}-php-pecl-memcached
   - php{{ php_version }}-php-ldap
 
 #Additional software
@@ -49,3 +48,4 @@ php_packages:
 additional_packages:
   - catdoc
   - xls2csv
+  - mc
