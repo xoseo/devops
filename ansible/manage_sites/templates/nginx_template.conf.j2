@@ -1,0 +1,70 @@
+server {
+    listen 80 ;
+  
+    server_name {{ domain }} www.{{ domain }};
+  
+    access_log /var/log/nginx/{{ domain }}_access.log main;
+    error_log  /var/log/nginx/{{ domain }}_error.log warn;
+
+    #charset utf-8;
+    server_name_in_redirect off;
+
+    proxy_set_header	X-Real-IP $remote_addr;
+    proxy_set_header	X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header	Host $host:80;
+
+    set $proxyserver  "http://127.0.0.1:8888";
+  
+    set $imcontenttype	"text/html; charset=utf-8";
+    set $docroot		"/var/www/{{ domain }}";
+
+    index index.php;
+    root "/var/www/{{ domain }}";
+    proxy_ignore_client_abort off;
+
+    # Redirect to ssl if need
+    if (-f /var/www/{{ domain }}/.htsecure) { rewrite ^(.*)$ https://$host$1 permanent; }
+  
+    # Include parameters common to all websites
+    include bx/conf/bitrix.conf;
+
+}
+
+server {
+    listen 443 ssl http2;
+  
+    server_name {{ domain }} www.{{ domain }};
+  
+    #SSL
+    #ssl_certificate   /etc/nginx/ssl/{{ domain }}.crt;
+    #ssl_certificate_key  /etc/nginx/ssl/{{ domain }}.key;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+    ssl_ciphers 'TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA';
+    ssl_prefer_server_ciphers on;
+    #ssl_dhparam         /etc/nginx/ssl/dhparam.pem;
+
+    access_log /var/log/nginx/{{ domain }}_access.log main;
+    error_log  /var/log/nginx/{{ domain }}_error.log warn;
+
+    #charset utf-8;
+    server_name_in_redirect off;
+
+    proxy_set_header	X-Real-IP $remote_addr;
+    proxy_set_header	X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header	Host $host:443;
+    proxy_set_header  HTTPS YES;
+    proxy_set_header  X-Forwarded-Proto https;
+
+    set $proxyserver  "http://127.0.0.1:8888";
+  
+    set $imcontenttype	"text/html; charset=utf-8";
+    set $docroot		"/var/www/{{ domain }}";
+
+    index index.php;
+    root "/var/www/{{ domain }}";
+    proxy_ignore_client_abort off;
+
+    # Include parameters common to all websites
+    include bx/conf/bitrix.conf;
+
+}

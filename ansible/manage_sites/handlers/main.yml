@@ -1,0 +1,10 @@
+---
+# handlers file for manage_sites
+- name: httpd reload
+  service:
+    name: httpd
+    state: reloaded
+- name: nginx reload
+  service:
+    name: nginx
+    state: reloaded

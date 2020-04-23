@@ -1,0 +1,67 @@
+---
+- name: Create destination directory
+  file:
+    dest: /var/www/{{ domain }}
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0770
+- name: Copy bitrixsetup files
+  copy:
+    src: files/bitrixsetup/
+    dest: /var/www/{{ domain }}/
+    owner: apache
+    group: apache
+    mode: '0760'
+- name: Copy config files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  with_items:
+    - { src: 'templates/nginx_template.conf.j2', dest: "/etc/nginx/bx/site_enabled/{{ domain }}.conf" }
+    - { src: 'templates/httpd_template.conf.j2', dest: "/etc/httpd/bx/conf/{{ domain }}.conf" }
+  notify:
+    - httpd reload
+    - nginx reload
+- name: Create MySQL user with name "{{ db_user }}" and password {{ db_user_pass }} with all privileges on "{{ db_name }}"
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_user_pass }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: localhost
+    state: present
+- name: Create the database with name "{{ db_name }}"
+  mysql_db:
+    name: "{{ db_name }}"
+    state: present
+- name: Editing .settings.php and dbconn.php
+  replace:
+    path: "{{ item.dest }}"
+    regexp: "{{ item.reg }}"
+    replace: "{{ item.rep }}"
+  with_items:
+    - { dest: "/var/www/{{ domain }}/bitrix/.settings.php", reg: '__DATABASE__', rep: "{{ db_name }}" }
+    - { dest: "/var/www/{{ domain }}/bitrix/.settings.php", reg: '__LOGIN__', rep: "{{ db_user }}" }
+    - { dest: "/var/www/{{ domain }}/bitrix/.settings.php", reg: '__PASSWORD__', rep: "{{ db_user_pass }}" }
+    - { dest: "/var/www/{{ domain }}/bitrix/php_interface/dbconn.php", reg: '__DATABASE__', rep: "{{ db_name }}" }
+    - { dest: "/var/www/{{ domain }}/bitrix/php_interface/dbconn.php", reg: '__LOGIN__', rep: "{{ db_user }}" }
+    - { dest: "/var/www/{{ domain }}/bitrix/php_interface/dbconn.php", reg: '__PASSWORD__', rep: "{{ db_user_pass }}" }
+#- name: Generate an OpenSSL private key with a size 2048 bits
+#  openssl_privatekey:
+#    path: /etc/nginx/ssl/{{ domain }}.key
+#    size: 2048
+#- name: Generate an OpenSSL Certificate Signing Request
+#  openssl_csr:
+#    path: /etc/nginx/ssl/{{ domain }}.csr
+#    privatekey_path: /etc/nginx/ssl/cert.key
+#    common_name: "{{ domain }}"
+#- name: Generate a Self Signed OpenSSL certificate
+#  openssl_certificate:
+#    path: /etc/nginx/ssl/{{ domain }}.crt
+#    privatekey_path: /etc/nginx/ssl/{{ domain }}.key
+#    csr_path: /etc/nginx/ssl/{{ domain }}.csr
+#    provider: selfsigned
