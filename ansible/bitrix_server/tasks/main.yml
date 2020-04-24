@@ -256,6 +256,13 @@
     name: "{{ additional_packages }}"
     state: present
     disablerepo: bitrix
+- name: Copy manage_sites role
+  copy:
+    src: files/roles
+    dest: /etc/ansible/
+    owner: root
+    group: root
+    mode: '0700'
 - name: Start and enable Redis Service
   service:
     name: redis
