@@ -46,3 +46,4 @@ additional_packages:
   - catdoc
   - xls2csv
   - mc
+  - ansible

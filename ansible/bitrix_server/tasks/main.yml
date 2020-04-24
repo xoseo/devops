@@ -197,10 +197,6 @@
   with_items:
     - files/bitrixsetup.php
     - files/.htaccess
-- name: install additional software
-  yum:
-    name: "{{ additional_packages }}"
-    state: present
 - name: Adding bitrix repo for Push-server
   copy:
     src: files/bitrix.repo
@@ -255,6 +251,11 @@
     path: /etc/hosts
     regexp: "{{ ansible_facts['nodename'] }}"
     line: "{{ ansible_facts['default_ipv4']['address'] }} {{ ansible_facts['nodename'] }}"
+- name: install additional software
+  yum:
+    name: "{{ additional_packages }}"
+    state: present
+    disablerepo: bitrix
 - name: Start and enable Redis Service
   service:
     name: redis
