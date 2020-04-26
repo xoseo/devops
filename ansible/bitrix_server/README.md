@@ -10,7 +10,6 @@
 * php-fpm
 * mariadb
 * push-server
-* memcached
 * redis
 * Дополнительное ПО для прохождения проверок Bitrix
 
@@ -105,4 +104,4 @@ Free
 ##### Author Information
 ------------------
 
-Kobylkin Konstantin. EPAM DevOps Winter 2019
+Kobylkin Konstantin.
