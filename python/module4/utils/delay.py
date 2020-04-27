@@ -1,10 +1,10 @@
 from time import sleep
+from functools import wraps
 
 def delay(func):
+	@wraps(func)
 	def wrapper(*args, **kwargs):
 		sleep(3)
 		return func(*args, **kwargs)
-	wrapper.__name__ = func.__name__
-	wrapper.__doc__ = func.__doc__
 	return wrapper
 
