@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
 
 #test = CountTags('https://webscraper.io/test-sites/e-commerce/allinone')
-test = CountTags('https://python-scripts.com/import-collections')
+#test = CountTags('https://python-scripts.com/import-collections')
 
 #print(test.all_tags())
 #print(test.tags())
