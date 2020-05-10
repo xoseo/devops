@@ -9,5 +9,5 @@ variable phpfpm_version {
 }
 variable network_name {
   description = "Network name"
-  default     = "homework_network"
+  default     = "epam"
 }
