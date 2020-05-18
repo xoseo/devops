@@ -263,6 +263,13 @@
     owner: root
     group: root
     mode: '0700'
+- name: Symbolic link to add_site
+  file:
+    src: /etc/ansible/roles/manage_sites/files/add_sites.sh
+    dest: /usr/local/sbin/add_site
+    owner: root
+    group: root
+    state: link
 - name: Start and enable Redis Service
   service:
     name: redis
