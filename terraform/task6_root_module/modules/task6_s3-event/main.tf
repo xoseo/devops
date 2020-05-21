@@ -14,7 +14,7 @@ resource "aws_iam_role_policy" "test_policy" {
                 "dynamodb:UpdateItem",
                 "dynamodb:DeleteItem"
             ],
-            "Resource": "arn:aws:dynamodb:us-east-1:713914121976:table/task6_s3-event"
+            "Resource": "arn:aws:dynamodb:us-east-1:*:table/task6_s3-event"
         }
     ]
 }
@@ -45,7 +45,8 @@ resource "aws_lambda_permission" "allow_bucket" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.func.arn
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.bucket.arn
+#  source_arn    = aws_s3_bucket.bucket.arn
+  source_arn    = var.bucket_arn
 }
 
 resource "aws_lambda_function" "func" {
@@ -56,12 +57,13 @@ resource "aws_lambda_function" "func" {
   runtime       = "python3.6"
 }
 
-resource "aws_s3_bucket" "bucket" {
-  bucket = "simazu-task6-bucket"
-}
+#resource "aws_s3_bucket" "bucket" {
+#  bucket = "simazu-task6-bucket"
+#}
 
 resource "aws_s3_bucket_notification" "bucket_notification" {
-  bucket = aws_s3_bucket.bucket.id
+#  bucket = aws_s3_bucket.bucket.id
+  bucket = var.bucket_name
 
   lambda_function {
     lambda_function_arn = aws_lambda_function.func.arn
