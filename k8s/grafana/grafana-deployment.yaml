@@ -1,0 +1,36 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: grafana-deployment
+  labels:
+    app: grafana
+  namespace: grafana
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+      role: monitor
+      tier: backend
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: grafana
+        role: monitor
+        tier: backend
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:master-ubuntu
+        resources:
+          requests:
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+          - mountPath: /var/lib/grafana
+            name: grafana-storage
+            readOnly: false
+      volumes:
+        - name: grafana-storage
+          hostPath:
+            path: /var/lib/grafana
