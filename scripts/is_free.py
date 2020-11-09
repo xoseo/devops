@@ -15,7 +15,7 @@ def domain_checker(dom_list, log_file):
 			file.seek(-2, os.SEEK_END)
 			while file.read(1) != b'\n':
 				file.seek(-2, os.SEEK_CUR)
-			dom = file.readline().decode().split()[0].strip('.ru')
+			dom = file.readline().decode().split()[0][:-3]
 			start_from = dom_list.index(dom)+1
 	for dom in dom_list[start_from:]:
 		domain = whois.query(dom + '.ru')
